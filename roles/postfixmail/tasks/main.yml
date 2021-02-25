@@ -1,0 +1,62 @@
+---
+  - name: install package PHP, Apache and Required Extensions
+    apt:
+      name: "{{ install_packages }}"
+      state: "{{ apt_install_state | default('latest') }}"
+      update_cache: true
+      cache_valid_time: "{{ apt_update_cache_valid_time | default(3600) }}"
+
+  - name: check if multi-instance postfix is enabled
+    shell: "postconf multi_instance_enable | awk '{print $3}'"
+    register: enabled
+
+  - name: check if instance already exists
+    shell: "postmulti -l | grep {{instance}} | awk '{print $1}'"
+    register: exists
+
+  - name: Ensure group "mailuser" exists
+    ansible.builtin.group:
+      name: mailuser
+      gid: 150
+      state: present
+  - name: Add the user 'mailuser'
+    ansible.builtin.user:
+      name: mailuser
+      home: /var/vmail
+      comment: mail user and group
+      uid: 150
+      groups: mailuser
+  - name: Recursively change ownership of a directory
+    ansible.builtin.file:
+      path: /var/vmail
+      state: directory
+      recurse: yes
+      owner: mailuser
+      group: mailuser
+      mode: '0770'
+
+  - name: enable postfix multi instance
+    shell: "postmulti -e init"
+    when: enabled.stdout != "yes"
+
+  - name: create postfix instance
+    shell: "postmulti -I {{instance}} -G {{instance_group}} -e create"
+    when: exists.stdout != instance
+
+  - name: configure postfix (main.cf)
+    ansible.builtin.template:
+      src: main.cf.j2
+      dest: /etc/postfix/main.cf
+      validate: postconf -d -c %s
+      mode: "0644"
+    notify:
+      - restart postfix
+
+  - name: configure postfix (master.cf)
+    ansible.builtin.template:
+      src: master.cf.j2
+      dest: /etc/postfix/master.cf
+      validate: postconf -d -c %s
+      mode: "0644"
+    notify:
+      - restart postfix
