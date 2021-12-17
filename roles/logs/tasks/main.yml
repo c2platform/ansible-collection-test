@@ -1,0 +1,21 @@
+---
+- name: Search Jira
+  community.general.jira:
+    uri: "{{ logs_jira_server_uri }}"
+    username: "{{ logs_jira_username}}"
+    password: "{{ logs_jira_password }}"
+    operation: search
+    maxresults: "{{ logs_jira_maxresults|default(omit) }}"
+    jql: "{{ logs_jira_jql }}"
+  register: _issues
+
+- set_fact:
+    issues: "{{ _issues['meta']['issues'] }}"
+
+- debug:
+    msg: "{{ item }}"
+  with_items: "{{ issues|map(attribute='key') }}"
+
+- copy: # debug
+    content: "{{ {'issues': issues }|to_nice_yaml }}"
+    dest: /tmp/issues.yml

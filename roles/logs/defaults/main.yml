@@ -1,0 +1,6 @@
+---
+logs_jira_server_uri: https://myjiraserver
+logs_jira_username: admin
+logs_jira_password: vault
+logs_jira_jql: updated >= 2021-12-05 AND updated <= 2021-12-18  order by updated asc
+# logs_jira_maxresults: 10
