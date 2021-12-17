@@ -1,6 +1,6 @@
 ---
 - name: Search Jira
-  community.general.jira:
+  c2platform.test.jira:
     uri: "{{ logs_jira_server_uri }}"
     username: "{{ logs_jira_username}}"
     password: "{{ logs_jira_password }}"
