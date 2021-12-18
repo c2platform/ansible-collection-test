@@ -1,21 +1,30 @@
 ---
+- name: Sprint facts
+  c2platform.core.set_sprint_facts: {}
+
 - name: Search Jira
-  c2platform.test.jira:
+  community.general.jira:
     uri: "{{ logs_jira_server_uri }}"
     username: "{{ logs_jira_username}}"
     password: "{{ logs_jira_password }}"
     operation: search
     maxresults: "{{ logs_jira_maxresults|default(omit) }}"
-    jql: "{{ logs_jira_jql }}"
+    jql: "updated >= {{ sprint['start'] }} AND updated <= {{ sprint['end'] }}  order by updated asc"
+  args:
+    fields:
+      comment: null
+      summary: null
   register: _issues
 
-- set_fact:
-    issues: "{{ _issues['meta']['issues'] }}"
+- name: Sprint facts
+  c2platform.core.set_sprint_facts: {}
 
-- debug:
-    msg: "{{ item }}"
-  with_items: "{{ issues|map(attribute='key') }}"
+- name: Log
+  c2platform.test.log:
+    issues: "{{ _issues['meta']['issues'] }}"
+    sprint: "{{ sprint }}"
+  register: _logs
 
 - copy: # debug
-    content: "{{ {'issues': issues }|to_nice_yaml }}"
-    dest: /tmp/issues.yml
+    content: "{{ {'sprint': sprint, '_logs': _logs, 'issues': _issues['meta']['issues'] }|to_nice_yaml }}"
+    dest: /tmp/log.yml
