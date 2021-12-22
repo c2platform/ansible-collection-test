@@ -1,23 +1,27 @@
 ---
+- name: Atlassian Python API wrapper
+  pip:
+    name: atlassian-python-api
+    state: present
+
 - name: Sprint facts
-  c2platform.core.set_sprint_facts: {}
+  c2platform.core.set_sprint_facts:
+    date: "{{ logs_sprint_date|default(omit) }}"
 
 - name: Search Jira
-  community.general.jira:
+  c2platform.test.jira:
     uri: "{{ logs_jira_server_uri }}"
     username: "{{ logs_jira_username}}"
     password: "{{ logs_jira_password }}"
     operation: search
     maxresults: "{{ logs_jira_maxresults|default(omit) }}"
-    jql: "updated >= {{ sprint['start'] }} AND updated <= {{ sprint['end'] }}  order by updated asc"
+    jql: "Sprint = \"{{ sprint['name'] }}\""
   args:
     fields:
       comment: null
       summary: null
+      updated: null
   register: _issues
-
-- name: Sprint facts
-  c2platform.core.set_sprint_facts: {}
 
 - name: Log
   c2platform.test.log:
@@ -25,6 +29,27 @@
     sprint: "{{ sprint }}"
   register: _logs
 
+- name: Confluence log source
+  template:
+    src: log.html.j2
+    dest: "/tmp/{{ sprint['name'] }}.html"
+    mode: 0644
+
+- name: Confluence page
+  c2platform.test.confluence:
+    url: "{{ logs_confluence_server_uri }}"
+    username: "{{ logs_confluence_username}}"
+    password: "{{ logs_confluence_password }}"
+    space: LOG
+    title: "Log {{ sprint['name'] }}"
+    sprint: "{{ sprint }}"
+    body: "/tmp/{{ sprint['name'] }}.html"
+  register: _confluence
+
 - copy: # debug
     content: "{{ {'sprint': sprint, '_logs': _logs, 'issues': _issues['meta']['issues'] }|to_nice_yaml }}"
     dest: /tmp/log.yml
+
+- copy: # debug
+    content: "{{ {'confluence': _confluence }|to_nice_yaml }}"
+    dest: /tmp/confluence.yml

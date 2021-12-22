@@ -2,23 +2,24 @@
 
 from ansible.module_utils.basic import *
 from datetime import datetime
+from datetime import timedelta
 
 
 def log(data):
-    return comments(data)
+    return days(data)
 
 
+# Comment created without time
 def comment_created_day(comment):
-    cmt_created = comment['created'].strftime("%Y-%m-%d")
-    return datetime.strptime(cmt_created, "%Y-%m-%d")
+    crtd = datetime.strptime(comment['created'], '%Y-%m-%dT%H:%M:%S.%f%z')
+    return datetime.strptime(crtd.strftime("%Y-%m-%d"), "%Y-%m-%d")
 
 
 # Comment made in sprint?
-def sprint_comment(data, comment):
-    cmt_created = comment_created_day(comment)
+def sprint_comment(data, comment, comment_created):
     start = datetime.strptime(data['sprint']['start'], "%Y-%m-%d")
     end = datetime.strptime(data['sprint']['end'], "%Y-%m-%d")
-    return start <= cmt_created <= end
+    return start <= comment_created <= end
 
 
 def comments(data):
@@ -31,10 +32,27 @@ def comments(data):
                    "created": crtd,
                    "body": comment['body'],
                    "issue": issue['key'],
+                   "id": comment['id'],
                    "summary": issue['fields']['summary']}
-            if sprint_comment(data, cmt):
+            cmt_created = comment_created_day(comment)
+            cmt['created-day'] = cmt_created.strftime("%Y-%m-%d")
+            if sprint_comment(data, cmt, cmt_created):
                 cmts.append(cmt)
     return sorted(cmts, key=lambda issue: issue['created'])
+
+
+def days(data):
+    sdays = {}
+    cmts = comments(data)
+    start = datetime.strptime(data['sprint']['start'], "%Y-%m-%d")
+    end = datetime.strptime(data['sprint']['end'], "%Y-%m-%d")
+    delta = end - start   # returns timedelta
+    for i in range(delta.days + 1):
+        day = (start + timedelta(days=i)).strftime("%Y-%m-%d")
+        cmts2 = [item for item in cmts if item['created-day'] == day]
+        # cmts2 = [item for item in cmts]
+        sdays[day] = cmts2
+    return sdays
 
 
 def main():
@@ -42,7 +60,7 @@ def main():
               "sprint": {"required": True, "type": "dict"}}
     module = AnsibleModule(argument_spec=fields)
     cmts = log(module.params)
-    module.exit_json(changed=False, comments=cmts)
+    module.exit_json(changed=False, days=cmts)
 
 
 if __name__ == '__main__':

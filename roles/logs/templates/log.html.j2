@@ -1,0 +1,167 @@
+<ac:layout>
+  <ac:layout-section ac:type="single">
+    <ac:layout-cell>
+      <ac:structured-macro ac:name="details" ac:schema-version="1" ac:macro-id="b95cb7f7-fa68-47ce-8ccc-f775903d035e">
+        <ac:parameter ac:name="hidden">true</ac:parameter>
+        <ac:parameter ac:name="id">sprint</ac:parameter>
+        <ac:rich-text-body>
+          <table class="wrapped">
+            <tbody>
+              <tr>
+                <th>Sprint</th>
+                <td>{{ sprint['name'] }}</td>
+              </tr>
+              <tr>
+                <th>Start date</th>
+                <td><time datetime="{{ sprint['start'] }}" /></td>
+              </tr>
+              <tr>
+                <th>End date</th>
+                <td><time datetime="{{ sprint['end'] }}" /></td>
+              </tr>
+              <tr>
+                <th>Weeks</th>
+                <td>{{ sprint['weeks']|join(', ') }}</td>
+              </tr>
+{% if logs_sprints_goals[sprint['name']] is defined %}
+{%   if logs_sprints_goals[sprint['name']]['goal'] is defined %}
+              <tr>
+                <th>Goal</th>
+                <td>{{ logs_sprints_goals[sprint['name']]['goal'] }}</td>
+              </tr>
+{%   endif %}
+{% endif %}
+              </tbody>
+          </table>
+        </ac:rich-text-body>
+      </ac:structured-macro>
+{% if logs_sprints_goals[sprint['name']] is defined %}
+{%   if logs_sprints_goals[sprint['name']]['goal'] is defined %}
+      <ac:structured-macro ac:name="excerpt" ac:schema-version="1" ac:macro-id="5095074f-8c5b-4c0d-a000-8b8ae3518094">
+        <ac:parameter ac:name="atlassian-macro-output-type">INLINE</ac:parameter>
+        <ac:rich-text-body><span class="field-value ghx-readonly overflow-ellipsis">{{ logs_sprints_goals[sprint['name']]['goal'] }}</span></ac:rich-text-body>
+      </ac:structured-macro>
+{%   endif %}
+{% endif %}
+    </ac:layout-cell>
+  </ac:layout-section>
+  <ac:layout-section ac:type="single">
+    <ac:layout-cell>
+      <p><ac:structured-macro ac:name="toc" ac:schema-version="1" ac:macro-id="1c0baae4-c9e5-422e-8b64-fa49d7bc9921"><ac:parameter ac:name="type">flat</ac:parameter></ac:structured-macro></p>
+    </ac:layout-cell>
+  </ac:layout-section>
+  <ac:layout-section ac:type="two_right_sidebar">
+    <ac:layout-cell>
+{% if logs_sprints_goals[sprint['name']] is defined %}
+{%   if logs_sprints_goals[sprint['name']]['review-retro'] is defined %}
+        <h2>Planning</h2>
+        <hr />
+        <p>
+          <ac:structured-macro ac:name="markdown" ac:schema-version="1" ac:macro-id="ac90295d-83e9-4351-9c3a-3e5cbd3f76ec">
+            <ac:plain-text-body><![CDATA[{{ logs_sprints_goals[sprint['name']]['planning'] }}]]></ac:plain-text-body>
+            </ac:structured-macro>
+        </p>
+{%   endif %}
+{% endif %}
+{% if logs_sprints_goals[sprint['name']] is defined %}
+{%   if logs_sprints_goals[sprint['name']]['review-retro'] is defined %}
+        <h2>Review, retrospective</h2>
+        <hr />
+        <p>
+          <ac:structured-macro ac:name="markdown" ac:schema-version="1" ac:macro-id="ac90295d-83e9-4351-9c3a-3e5cbd3f76ec">
+            <ac:plain-text-body><![CDATA[{{ logs_sprints_goals[sprint['name']]['review-retro'] }}]]></ac:plain-text-body>
+            </ac:structured-macro>
+        </p>
+{%   endif %}
+{% endif %}
+        <h2>Steps</h2>
+        <hr />
+{% for day in sprint['days'] %}
+{%     set ns = namespace() %}
+{# set cannot be used in a loop because it is rest for each item in loop #}
+{# so we put out variable in a namespace #}
+{%     set ns.issues = [] %}
+        <time datetime="{{ day }}" /><br />
+        <ul>
+{%   for cmt in _logs['days'][day] %}
+{%       if not cmt['issue'] in ns.issues  %}
+            <li>
+              <ac:structured-macro ac:name="jira" ac:schema-version="1" ac:macro-id="781b3187-64e0-41d0-bf00-1ac76c508468">
+                <ac:parameter ac:name="server">{{ logs_jira_server }}</ac:parameter>
+                <ac:parameter ac:name="serverId">{{ logs_jira_server_id }}</ac:parameter>
+                <ac:parameter ac:name="key">{{ cmt['issue'] }}</ac:parameter>
+              </ac:structured-macro>
+            </li>
+{%       endif %}
+            <li>{{ cmt['body']|split('\n')|first|c2platform.test.jira_markup2html }} <a href="{{ logs_jira_server_uri }}/browse/{{ cmt['issue'] }}?focusedCommentId={{ cmt['id'] }}&amp;page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-{{ cmt['id'] }}">...</a>
+            </li>
+{%      set ns.issues = ns.issues + [cmt['issue']] %}
+{%   endfor %}
+        </ul>
+{% endfor %}
+    </ac:layout-cell>
+    <ac:layout-cell>
+        <p>
+          <ac:structured-macro ac:name="jirachart" ac:schema-version="1" ac:macro-id="64edcbfe-6cff-495b-aaaf-5e4576008614">
+            <ac:parameter ac:name="border">false</ac:parameter>
+            <ac:parameter ac:name="showinfor">false</ac:parameter>
+            <ac:parameter ac:name="server">{{ logs_jira_server }}</ac:parameter>
+            <ac:parameter ac:name="jql">Sprint="{{ sprint['name'] }}"</ac:parameter>
+            <ac:parameter ac:name="statType">issuetype</ac:parameter>
+            <ac:parameter ac:name="chartType">pie</ac:parameter>
+            <ac:parameter ac:name="width">300</ac:parameter>
+            <ac:parameter ac:name="isAuthenticated">true</ac:parameter>
+            <ac:parameter ac:name="serverId">{{ logs_jira_server_id }}</ac:parameter>
+          </ac:structured-macro>
+          <ac:structured-macro ac:name="jirachart" ac:schema-version="1" ac:macro-id="4f6361b5-dbee-4b62-835d-4a4448873ef5">
+            <ac:parameter ac:name="server">{{ logs_jira_server }}</ac:parameter>
+            <ac:parameter ac:name="sortDirection" />
+            <ac:parameter ac:name="jql">Sprint="{{ sprint['name'] }}"</ac:parameter>
+            <ac:parameter ac:name="ystattype">statuses</ac:parameter>
+            <ac:parameter ac:name="chartType">twodimensional</ac:parameter>
+            <ac:parameter ac:name="width">300</ac:parameter><ac:parameter ac:name="sortBy" />
+            <ac:parameter ac:name="isAuthenticated">true</ac:parameter>
+            <ac:parameter ac:name="numberToShow">60</ac:parameter>
+            <ac:parameter ac:name="xstattype">issuetype</ac:parameter>
+            <ac:parameter ac:name="serverId">{{ logs_jira_server_id }}</ac:parameter>
+          </ac:structured-macro>
+        </p>
+        <h2>Recently Updated Tickets</h2>
+        <hr />
+        <p>
+          <ac:structured-macro ac:name="jira" ac:schema-version="1" ac:macro-id="f5d72fa6-745e-4bd1-8d6b-87e6de45437a">
+            <ac:parameter ac:name="server">Jira</ac:parameter>
+            <ac:parameter ac:name="columns">key,summary,type</ac:parameter>
+            <ac:parameter ac:name="maximumIssues">10</ac:parameter>
+            <ac:parameter ac:name="jqlQuery">sprint = "{{ sprint['name'] }}" and updated &gt;= {{ sprint['start'] }} AND updated &lt;= {{ sprint['end']  }}  order by updated desc </ac:parameter>
+            <ac:parameter ac:name="serverId">{{ logs_jira_server_id }}</ac:parameter>
+          </ac:structured-macro>
+        </p>
+        <h2>Components</h2>
+        <hr />
+        <p>
+          <ac:structured-macro ac:name="jirachart" ac:schema-version="1" ac:macro-id="4f6361b5-dbee-4b62-835d-4a4448873ef5">
+            <ac:parameter ac:name="server">{{ logs_jira_server }}</ac:parameter>
+            <ac:parameter ac:name="sortDirection" />
+            <ac:parameter ac:name="jql">Sprint="{{ sprint['name'] }}"</ac:parameter>
+            <ac:parameter ac:name="ystattype">components</ac:parameter>
+            <ac:parameter ac:name="chartType">twodimensional</ac:parameter>
+            <ac:parameter ac:name="width" /><ac:parameter ac:name="sortBy" />
+            <ac:parameter ac:name="isAuthenticated">true</ac:parameter>
+            <ac:parameter ac:name="numberToShow">60</ac:parameter>
+            <ac:parameter ac:name="xstattype">issuetype</ac:parameter>
+            <ac:parameter ac:name="serverId">{{ logs_jira_server_id }}</ac:parameter></ac:structured-macro>
+        </p>
+        <h2>Due Tickets</h2>
+        <hr />
+        <p>
+          <ac:structured-macro ac:name="jira" ac:schema-version="1" ac:macro-id="f8c20546-d317-4764-89ac-db80a2c2d2cd">
+            <ac:parameter ac:name="server">{{ logs_jira_server }}</ac:parameter>
+            <ac:parameter ac:name="columns">key,summary,status</ac:parameter>
+            <ac:parameter ac:name="maximumIssues">20</ac:parameter>
+            <ac:parameter ac:name="jqlQuery">duedate &lt; endOfWeek() and status in (&quot;In Progress&quot;,&quot;In Review&quot;,Open,Reopened,&quot;To Do&quot;)</ac:parameter>
+            <ac:parameter ac:name="serverId">{{ logs_jira_server_id }}</ac:parameter></ac:structured-macro>
+        </p>
+    </ac:layout-cell>
+  </ac:layout-section>
+</ac:layout>
