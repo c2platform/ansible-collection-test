@@ -1,4 +1,4 @@
-"""java filters."""
+"""jira filters."""
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -43,7 +43,24 @@ def jira_markup2html(jira_markup):
         repl='<a href="\\2">\\1</a>',
         string=jira_markup
     )
+    jira_markup = re.sub(
+        pattern="-(\S.*?\S)-\s",
+        repl='<s>\\1</s>&nbsp;',
+        string=jira_markup
+    )
+    jira_markup = re.sub(
+        pattern="\s-(\S.*?\S)-\s",
+        repl='&nbsp;<s>\\1</s>&nbsp;',
+        string=jira_markup
+    )
     return jira_markup
+
+
+def jira_jql(sprint, logs_group):
+    jql = "Sprint = \"{}\"".format(sprint['name'])
+    if 'project' in logs_group:
+        jql += " and project = \"{}\"".format(logs_group['project'])
+    return jql
 
 
 class FilterModule(object):
@@ -51,5 +68,6 @@ class FilterModule(object):
 
     def filters(self):
         return {
-            'jira_markup2html': jira_markup2html
+            'jira_markup2html': jira_markup2html,
+            'jira_jql': jira_jql
         }

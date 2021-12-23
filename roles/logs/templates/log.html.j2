@@ -23,25 +23,26 @@
                 <th>Weeks</th>
                 <td>{{ sprint['weeks']|join(', ') }}</td>
               </tr>
-{% if logs_sprints_goals[sprint['name']] is defined %}
-{%   if logs_sprints_goals[sprint['name']]['goal'] is defined %}
+{% if logs_group['sprints'][sprint['name']]['goal']|default(False) %}
               <tr>
                 <th>Goal</th>
-                <td>{{ logs_sprints_goals[sprint['name']]['goal'] }}</td>
+                <td>{{ logs_group['sprints'][sprint['name']]['goal'] }}</td>
               </tr>
-{%   endif %}
 {% endif %}
               </tbody>
           </table>
         </ac:rich-text-body>
       </ac:structured-macro>
-{% if logs_sprints_goals[sprint['name']] is defined %}
-{%   if logs_sprints_goals[sprint['name']]['goal'] is defined %}
-      <ac:structured-macro ac:name="excerpt" ac:schema-version="1" ac:macro-id="5095074f-8c5b-4c0d-a000-8b8ae3518094">
-        <ac:parameter ac:name="atlassian-macro-output-type">INLINE</ac:parameter>
-        <ac:rich-text-body><span class="field-value ghx-readonly overflow-ellipsis">{{ logs_sprints_goals[sprint['name']]['goal'] }}</span></ac:rich-text-body>
-      </ac:structured-macro>
-{%   endif %}
+{% if logs_group['sprints'][sprint['name']]['goal']|default(False) %}
+    <ac:structured-macro ac:name="info" ac:schema-version="1" ac:macro-id="29fc483e-af1e-4f93-a367-3b470924a38c">
+      <ac:parameter ac:name="icon">false</ac:parameter>
+      <ac:rich-text-body>
+        <ac:structured-macro ac:name="excerpt" ac:schema-version="1" ac:macro-id="5095074f-8c5b-4c0d-a000-8b8ae3518094">
+          <ac:parameter ac:name="atlassian-macro-output-type">INLINE</ac:parameter>
+          <ac:rich-text-body><span class="field-value ghx-readonly overflow-ellipsis">{{ logs_group['sprints'][sprint['name']]['goal'] }}</span></ac:rich-text-body>
+        </ac:structured-macro>
+      </ac:rich-text-body>
+    </ac:structured-macro>
 {% endif %}
     </ac:layout-cell>
   </ac:layout-section>
@@ -52,27 +53,23 @@
   </ac:layout-section>
   <ac:layout-section ac:type="two_right_sidebar">
     <ac:layout-cell>
-{% if logs_sprints_goals[sprint['name']] is defined %}
-{%   if logs_sprints_goals[sprint['name']]['review-retro'] is defined %}
+{% if logs_group['sprints'][sprint['name']]['planning']|default(False) %}
         <h2>Planning</h2>
         <hr />
         <p>
           <ac:structured-macro ac:name="markdown" ac:schema-version="1" ac:macro-id="ac90295d-83e9-4351-9c3a-3e5cbd3f76ec">
-            <ac:plain-text-body><![CDATA[{{ logs_sprints_goals[sprint['name']]['planning'] }}]]></ac:plain-text-body>
+            <ac:plain-text-body><![CDATA[{{ logs_group['sprints'][sprint['name']]['planning'] }}]]></ac:plain-text-body>
             </ac:structured-macro>
         </p>
-{%   endif %}
 {% endif %}
-{% if logs_sprints_goals[sprint['name']] is defined %}
-{%   if logs_sprints_goals[sprint['name']]['review-retro'] is defined %}
+{% if logs_group['sprints'][sprint['name']]['review-retro']|default(False) %}
         <h2>Review, retrospective</h2>
         <hr />
         <p>
           <ac:structured-macro ac:name="markdown" ac:schema-version="1" ac:macro-id="ac90295d-83e9-4351-9c3a-3e5cbd3f76ec">
-            <ac:plain-text-body><![CDATA[{{ logs_sprints_goals[sprint['name']]['review-retro'] }}]]></ac:plain-text-body>
+            <ac:plain-text-body><![CDATA[{{ logs_group['sprints'][sprint['name']]['review-retro'] }}]]></ac:plain-text-body>
             </ac:structured-macro>
         </p>
-{%   endif %}
 {% endif %}
         <h2>Steps</h2>
         <hr />
@@ -106,7 +103,7 @@
             <ac:parameter ac:name="border">false</ac:parameter>
             <ac:parameter ac:name="showinfor">false</ac:parameter>
             <ac:parameter ac:name="server">{{ logs_jira_server }}</ac:parameter>
-            <ac:parameter ac:name="jql">Sprint="{{ sprint['name'] }}"</ac:parameter>
+            <ac:parameter ac:name="jql">{{ sprint|c2platform.test.jira_jql(logs_group) }}</ac:parameter>
             <ac:parameter ac:name="statType">issuetype</ac:parameter>
             <ac:parameter ac:name="chartType">pie</ac:parameter>
             <ac:parameter ac:name="width">300</ac:parameter>
@@ -116,7 +113,7 @@
           <ac:structured-macro ac:name="jirachart" ac:schema-version="1" ac:macro-id="4f6361b5-dbee-4b62-835d-4a4448873ef5">
             <ac:parameter ac:name="server">{{ logs_jira_server }}</ac:parameter>
             <ac:parameter ac:name="sortDirection" />
-            <ac:parameter ac:name="jql">Sprint="{{ sprint['name'] }}"</ac:parameter>
+            <ac:parameter ac:name="jql">{{ sprint|c2platform.test.jira_jql(logs_group) }}</ac:parameter>
             <ac:parameter ac:name="ystattype">statuses</ac:parameter>
             <ac:parameter ac:name="chartType">twodimensional</ac:parameter>
             <ac:parameter ac:name="width">300</ac:parameter><ac:parameter ac:name="sortBy" />
@@ -133,7 +130,7 @@
             <ac:parameter ac:name="server">Jira</ac:parameter>
             <ac:parameter ac:name="columns">key,summary,type</ac:parameter>
             <ac:parameter ac:name="maximumIssues">10</ac:parameter>
-            <ac:parameter ac:name="jqlQuery">sprint = "{{ sprint['name'] }}" and updated &gt;= {{ sprint['start'] }} AND updated &lt;= {{ sprint['end']  }}  order by updated desc </ac:parameter>
+            <ac:parameter ac:name="jqlQuery">{{ sprint|c2platform.test.jira_jql(logs_group) }} and updated &gt;= {{ sprint['start'] }} AND updated &lt;= {{ sprint['end']  }}  order by updated desc </ac:parameter>
             <ac:parameter ac:name="serverId">{{ logs_jira_server_id }}</ac:parameter>
           </ac:structured-macro>
         </p>
@@ -143,7 +140,7 @@
           <ac:structured-macro ac:name="jirachart" ac:schema-version="1" ac:macro-id="4f6361b5-dbee-4b62-835d-4a4448873ef5">
             <ac:parameter ac:name="server">{{ logs_jira_server }}</ac:parameter>
             <ac:parameter ac:name="sortDirection" />
-            <ac:parameter ac:name="jql">Sprint="{{ sprint['name'] }}"</ac:parameter>
+            <ac:parameter ac:name="jql">{{ sprint|c2platform.test.jira_jql(logs_group) }}</ac:parameter>
             <ac:parameter ac:name="ystattype">components</ac:parameter>
             <ac:parameter ac:name="chartType">twodimensional</ac:parameter>
             <ac:parameter ac:name="width" /><ac:parameter ac:name="sortBy" />

@@ -1,0 +1,64 @@
+---
+- name: Sprint facts
+  c2platform.core.set_sprint_facts:
+    date: "{{ logs_sprint_date|default(omit) }}"
+    name: "{{ logs_publish_sprint|default(omit) }}"
+
+- debug:
+   msg: "Get Jira issues with JQL {{ sprint|c2platform.test.jira_jql(logs_group) }}"
+
+
+- name: Search Jira
+  c2platform.test.jira:
+    uri: "{{ logs_jira_server_uri }}"
+    username: "{{ logs_jira_username}}"
+    password: "{{ logs_jira_password }}"
+    operation: search
+    maxresults: "{{ logs_jira_maxresults|default(omit) }}"
+    jql: "{{ sprint|c2platform.test.jira_jql(logs_group) }}"
+  args:
+    fields:
+      comment: null
+      summary: null
+      updated: null
+  register: _issues
+
+- name: Log
+  c2platform.test.log:
+    issues: "{{ _issues['meta']['issues'] }}"
+    sprint: "{{ sprint }}"
+  register: _logs
+
+- name: Confluence HTML source
+  template:
+    src: log.html.j2
+    dest: "/tmp/{{ sprint['name'] }}.html"
+    mode: 0644
+
+- name: Simple HTML
+  template:
+    src: log2.html.j2
+    dest: "/tmp/{{ sprint['name'] }}-simple.html"
+    mode: 0644
+
+- copy: # debug
+    content: "{{ {'sprint': sprint, '_logs': _logs, 'issues': _issues['meta']['issues'] }|to_nice_yaml }}"
+    dest: /tmp/log.yml
+
+- debug:
+   msg: "Publish \"Log {{ sprint['name'] }}\" to {{ logs_group['space'] }}"
+
+- name: Confluence page
+  c2platform.test.confluence:
+    url: "{{ logs_confluence_server_uri }}"
+    username: "{{ logs_confluence_username}}"
+    password: "{{ logs_confluence_password }}"
+    space: "{{ logs_group['space'] }}"
+    title: "{{ logs_group['prefix']|default('Log') }} {{ sprint['name'] }}"
+    sprint: "{{ sprint }}"
+    body: "/tmp/{{ sprint['name'] }}.html"
+  register: _confluence
+
+- copy: # debug
+    content: "{{ {'confluence': _confluence }|to_nice_yaml }}"
+    dest: /tmp/confluence.yml
