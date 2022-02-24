@@ -77,11 +77,11 @@
 {%     set ns = namespace() %}
 {# set cannot be used in a loop because it is rest for each item in loop #}
 {# so we put out variable in a namespace #}
-{%     set ns.issues = [] %}
+{%     set ns.previous_issue = None %}
         <time datetime="{{ day }}" /><br />
         <ul>
 {%   for cmt in _logs['days'][day] %}
-{%       if not cmt['issue'] in ns.issues  %}
+{%       if not ns.previous_issue == cmt['issue']  %}
             <li>
               <ac:structured-macro ac:name="jira" ac:schema-version="1" ac:macro-id="781b3187-64e0-41d0-bf00-1ac76c508468">
                 <ac:parameter ac:name="server">{{ logs_jira_server }}</ac:parameter>
@@ -92,7 +92,7 @@
 {%       endif %}
             <li>{{ cmt['body']|split('\n')|first|c2platform.test.jira_markup2html }} <a href="{{ logs_jira_server_uri }}/browse/{{ cmt['issue'] }}?focusedCommentId={{ cmt['id'] }}&amp;page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-{{ cmt['id'] }}">...</a>
             </li>
-{%      set ns.issues = ns.issues + [cmt['issue']] %}
+{%      set ns.previous_issue = cmt['issue'] %}
 {%   endfor %}
         </ul>
 {% endfor %}

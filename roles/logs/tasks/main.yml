@@ -4,10 +4,17 @@
     name: atlassian-python-api
     state: present
 
-- include_tasks: "sprint.yml"
+- debug:
+    msg: "{{ group }} in {{ logs_publish_groups|join(',') }}"
+  when: group in logs_publish_groups
+  with_items: '{{ logs }}'
+  loop_control:
+    loop_var: group
+
+- include_tasks: "sprints.yml"
   vars:
     logs_group: "{{ logs[group] }}"
-  when: "{{ logs[group]['publish']|default(True) }}"
+  when: group in logs_publish_groups
   with_items: '{{ logs }}'
   loop_control:
     loop_var: group

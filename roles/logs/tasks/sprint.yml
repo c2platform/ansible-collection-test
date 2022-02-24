@@ -1,12 +1,16 @@
 ---
 - name: Sprint facts
   c2platform.core.set_sprint_facts:
-    date: "{{ logs_sprint_date|default(omit) }}"
-    name: "{{ logs_publish_sprint|default(omit) }}"
+    date: "{{ logs_sprint_date|default(omit) }}" # obsolete?
+    name: "{{ sprint_name }}"
+
+- copy: # debug
+    content: "{{ {'sprint_name': sprint_name, 'group': group, 'logs': logs }|to_nice_yaml }}"
+    dest: /tmp/debug.yml
+  changed_when: false
 
 - debug:
    msg: "Get Jira issues with JQL {{ sprint|c2platform.test.jira_jql(logs_group) }}"
-
 
 - name: Search Jira
   c2platform.test.jira:
@@ -29,24 +33,44 @@
     sprint: "{{ sprint }}"
   register: _logs
 
+- name: Make group directory
+  file:
+    path: "{{ logs_cache }}/{{ group }}"
+    owner: "{{ logs_cache_owner }}"
+    group: "{{ logs_cache_group }}"
+    state: directory
+    mode: 0755
+
 - name: Confluence HTML source
   template:
     src: log.html.j2
-    dest: "/tmp/{{ sprint['name'] }}.html"
+    dest: "{{ logs_cache }}/{{ group }}/{{ sprint['name'] }}-body.html"
+    owner: "{{ logs_cache_owner }}"
+    group: "{{ logs_cache_group }}"
     mode: 0644
+  register: _confluence_html
 
 - name: Simple HTML
   template:
     src: log2.html.j2
-    dest: "/tmp/{{ sprint['name'] }}-simple.html"
+    dest: "{{ logs_cache }}/{{ group }}/{{ sprint['name'] }}-simple.html"
+    owner: "{{ logs_cache_owner }}"
+    group: "{{ logs_cache_group }}"
     mode: 0644
 
-- copy: # debug
-    content: "{{ {'sprint': sprint, '_logs': _logs, 'issues': _issues['meta']['issues'] }|to_nice_yaml }}"
-    dest: /tmp/log.yml
+- name: Markdown
+  template:
+    src: log.md.j2
+    owner: "{{ logs_cache_owner }}"
+    group: "{{ logs_cache_group }}"
+    dest: "{{ logs_cache }}/{{ group }}/{{ sprint['name'] }}.md"
+    mode: 0644
 
-- debug:
-   msg: "Publish \"Log {{ sprint['name'] }}\" to {{ logs_group['space'] }}"
+#- copy: # debug
+#    content: "{{ {'sprint': sprint, '_logs': _logs, 'issues': _issues['meta']['issues'] }|to_nice_yaml }}"
+#    owner: "{{ logs_cache_owner }}"
+#    group: "{{ logs_cache_group }}"
+#    dest: '{{ logs_cache }}/log.yml'
 
 - name: Confluence page
   c2platform.test.confluence:
@@ -56,9 +80,29 @@
     space: "{{ logs_group['space'] }}"
     title: "{{ logs_group['prefix']|default('Log') }} {{ sprint['name'] }}"
     sprint: "{{ sprint }}"
-    body: "/tmp/{{ sprint['name'] }}.html"
+    body: "{{ logs_cache }}/{{ group }}/{{ sprint['name'] }}-body.html"
+  when: _confluence_html.changed
   register: _confluence
+  ignore_errors: true
+
+- name: Process fail
+  block:
+    - name: Save body
+      copy:
+        src: "{{ logs_cache }}/{{ group }}/{{ sprint['name'] }}-body.html"
+        dest: "{{ logs_cache }}/{{ group }}/{{ sprint['name'] }}-body-error.html"
+        owner: "{{ logs_cache_owner }}"
+        group: "{{ logs_cache_group }}"
+        remote_src: true
+    - name: Remove body
+      file:
+        path: "{{ logs_cache }}/{{ group }}/{{ sprint['name'] }}-body.html"
+        state: absent
+  when: _confluence.failed|default(False)
 
 - copy: # debug
+    owner: "{{ logs_cache_owner }}"
+    group: "{{ logs_cache_group }}"
     content: "{{ {'confluence': _confluence }|to_nice_yaml }}"
-    dest: /tmp/confluence.yml
+    dest: "{{ logs_cache }}/{{ group }}/{{ sprint['name'] }}-response.yml"
+  changed_when: false
