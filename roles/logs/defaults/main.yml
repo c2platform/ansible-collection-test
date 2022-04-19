@@ -1,0 +1,16 @@
+---
+logs_jira_server_uri: https://myjiraserver
+logs_confluence_server_uri: https://myconfluenceserver
+logs_jira_username: admin
+logs_jira_password: vault
+logs_jira_server_id:  yourserverid
+logs_jira_server: yourserver
+logs_confluence_username: "{{ logs_jira_username }}"
+logs_confluence_password: "{{ logs_jira_password }}"
+logs_jira_jql: updated >= 2021-12-05 AND updated <= 2021-12-18  order by updated asc
+# logs_sprint_date: '2021-12-19'
+logs_jira_maxresults: 10000
+logs_cache: /tmp
+logs_cache_owner: someuser
+logs_cache_group: somegroup
+logs_publish_groups: []

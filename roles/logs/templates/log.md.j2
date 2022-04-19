@@ -1,0 +1,15 @@
+## Steps
+
+{% for day in sprint['days'] %}
+{%     set ns = namespace() %}
+{%     set ns.issues = [] %}
+### {{ day }}
+{%   for cmt in _logs['days'][day] %}
+{%       if not cmt['issue'] in ns.issues  %}
+{{ cmt['issue'] }}
+{%       endif %}
+{{ cmt['body']|split('\n')|first }}
+{%      set ns.issues = ns.issues + [cmt['issue']] %}
+{%   endfor %}
+
+{% endfor %}

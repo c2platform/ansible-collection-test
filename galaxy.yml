@@ -14,7 +14,7 @@ readme: README.md
 tags: []
 
 dependencies:
-  c2platform.platform: ">=1.0.0"
+  c2platform.core: ">=0.1.0"
 
 repository: https://github.com/c2platform/ansible-collection-test
 documentation: https://github.com/c2platform/ansible-collection-test

@@ -1,0 +1,6 @@
+---
+- include_tasks: "sprint.yml"
+  with_items: "{{ logs_publish_sprints|default([logs_publish_sprint]) }}"
+  loop_control:
+    loop_var: sprint_name
+    label: "{{ group }} {{ sprint_name }}"
