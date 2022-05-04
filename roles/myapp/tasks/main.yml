@@ -9,7 +9,7 @@
     - myapp-systemctl-restart
 
 - include_role:
-    name: c2platform.tasks
+    name: c2platform.core.postgresql_tasks
     tasks_from: psql-database
 
 - name: Table
