@@ -1,0 +1,17 @@
+---
+- include_tasks: "hosts.yml"
+  with_items: '{{ dev_mount }}'
+  loop_control:
+    label: "{{ dev_mount_item['owner'] }}"
+    loop_var: dev_mount_item
+
+- name: Mount dir
+  file:
+    path: "{{ dev_mount_dir }}"
+    state: directory
+    mode: 0755
+    owner: "{{ dev_mount_owner }}"
+    group: "{{ dev_mount_owner }}"
+    recursive: true
+  delegate_to: localhost
+

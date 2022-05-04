@@ -1,0 +1,30 @@
+---
+- name: dev_mount_dir_host
+  set_fact:
+    dev_mount_dir_host: "{{ dev_mount_dir }}/{{ dev_mount_host }}"
+
+- block:
+    - name: Dir host
+      file:
+        path: "{{ dev_mount_dir_host }}"
+        state: directory
+        mode: 0755
+        owner: "{{ dev_mount_owner }}"
+        group: "{{ dev_mount_owner }}"
+
+    - name: Mount dir host dir  # noqa command-instead-of-shell
+      shell: |
+        if [[ $(/bin/findmnt -M "{{ dev_mount_dir_host }}/{{ (item|replace('/','-'))[1:] }}") ]]; then
+            echo "Mounted $(hostname) $(whoami)"
+        else
+            echo "Not mounted $(hostname) $(whoami)"
+            mkdir --parents {{ dev_mount_dir_host }}/{{ (item|replace('/','-'))[1:] }}
+            sshfs -o reconnect -C -o workaround=all -o nonempty {{ dev_mount_item['owner'] }}@{{ dev_mount_host }}:{{ item }} {{ dev_mount_dir_host }}/{{ (item|replace('/','-'))[1:] }}
+        fi
+      with_items: "{{ dev_mount_item['mounts'] }}"
+      become: yes
+      become_user: "{{ dev_mount_owner }}"
+      ignore_errors: true
+
+  delegate_to: localhost
+      #remote_user: "{{ dev_mount_owner }}"
