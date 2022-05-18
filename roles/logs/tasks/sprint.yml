@@ -87,6 +87,8 @@
 
 - name: Process fail
   block:
+    - debug:
+        msg: "{{ logs_cache }}/{{ group }}/{{ sprint['name'] }}-body-error.html"
     - name: Save body
       copy:
         src: "{{ logs_cache }}/{{ group }}/{{ sprint['name'] }}-body.html"
