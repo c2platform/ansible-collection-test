@@ -53,6 +53,21 @@ def jira_markup2html(jira_markup):
         repl='&nbsp;<s>\\1</s>&nbsp;',
         string=jira_markup
     )
+    jira_markup = re.sub(
+        pattern="\(x\)",
+        repl='<ac:emoticon ac:name="cross" />',
+        string=jira_markup
+    )
+    jira_markup = re.sub(
+        pattern="\(y\)",
+        repl='<ac:emoticon ac:name="thumbs-up" />',
+        string=jira_markup
+    )
+    jira_markup = re.sub(
+        pattern="\(n\)",
+        repl='<ac:emoticon ac:name="thumbs-down" />',
+        string=jira_markup
+    )
     return jira_markup
 
 
