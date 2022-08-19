@@ -23,23 +23,23 @@
                 <th>Weeks</th>
                 <td>{{ sprint['weeks']|join(', ') }}</td>
               </tr>
-{% if logs_group['sprints'][sprint['name']]['goal']|default(False) %}
+{% if logs_group[sprint['name']]['goal']|default(False) %}
               <tr>
                 <th>Goal</th>
-                <td>{{ logs_group['sprints'][sprint['name']]['goal'] }}</td>
+                <td>{{ logs_group[sprint['name']]['goal'] }}</td>
               </tr>
 {% endif %}
               </tbody>
           </table>
         </ac:rich-text-body>
       </ac:structured-macro>
-{% if logs_group['sprints'][sprint['name']]['goal']|default(False) %}
+{% if logs_group[sprint['name']]['goal']|default(False) %}
     <ac:structured-macro ac:name="info" ac:schema-version="1" ac:macro-id="29fc483e-af1e-4f93-a367-3b470924a38c">
       <ac:parameter ac:name="icon">false</ac:parameter>
       <ac:rich-text-body>
         <ac:structured-macro ac:name="excerpt" ac:schema-version="1" ac:macro-id="5095074f-8c5b-4c0d-a000-8b8ae3518094">
           <ac:parameter ac:name="atlassian-macro-output-type">INLINE</ac:parameter>
-          <ac:rich-text-body><span class="field-value ghx-readonly overflow-ellipsis">{{ logs_group['sprints'][sprint['name']]['goal'] }}</span></ac:rich-text-body>
+          <ac:rich-text-body><span class="field-value ghx-readonly overflow-ellipsis">{{ logs_group[sprint['name']]['goal'] }}</span></ac:rich-text-body>
         </ac:structured-macro>
       </ac:rich-text-body>
     </ac:structured-macro>
@@ -53,21 +53,21 @@
   </ac:layout-section>
   <ac:layout-section ac:type="two_right_sidebar">
     <ac:layout-cell>
-{% if logs_group['sprints'][sprint['name']]['planning']|default(False) %}
+{% if logs_group[sprint['name']]['planning']|default(False) %}
         <h2>Planning</h2>
         <hr />
         <p>
           <ac:structured-macro ac:name="markdown" ac:schema-version="1" ac:macro-id="ac90295d-83e9-4351-9c3a-3e5cbd3f76ec">
-            <ac:plain-text-body><![CDATA[{{ logs_group['sprints'][sprint['name']]['planning'] }}]]></ac:plain-text-body>
+            <ac:plain-text-body><![CDATA[{{ logs_group[sprint['name']]['planning'] }}]]></ac:plain-text-body>
             </ac:structured-macro>
         </p>
 {% endif %}
-{% if logs_group['sprints'][sprint['name']]['review-retro']|default(False) %}
+{% if logs_group[sprint['name']]['review-retro']|default(False) %}
         <h2>Review, retrospective</h2>
         <hr />
         <p>
           <ac:structured-macro ac:name="markdown" ac:schema-version="1" ac:macro-id="ac90295d-83e9-4351-9c3a-3e5cbd3f76ec">
-            <ac:plain-text-body><![CDATA[{{ logs_group['sprints'][sprint['name']]['review-retro'] }}]]></ac:plain-text-body>
+            <ac:plain-text-body><![CDATA[{{ logs_group[sprint['name']]['review-retro'] }}]]></ac:plain-text-body>
             </ac:structured-macro>
         </p>
 {% endif %}
