@@ -102,6 +102,9 @@
         state: absent
   when: _confluence.failed|default(False)
 
+- debug:
+    msg: "{{ logs_cache }}/{{ group }}/{{ sprint['name'] }}-body.html"
+
 - copy: # debug
     owner: "{{ logs_cache_owner }}"
     group: "{{ logs_cache_group }}"
